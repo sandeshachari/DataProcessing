@@ -1,30 +1,52 @@
-#!/usr/bin/python
-
 """
 CPS:	Single Pip
 Ign:	TCI
 Filter used in Pico:	10 kHz for both channels
+
+cases:
+1. 	Single pip, Ign in each cycle
+2. 	Dual pip, Ign in each cycle
+3. 	Multi pip, Ign in each thermo-cycle, fi in each thermo-cycle  <-- FI
 """
+
+#!/usr/bin/python
 
 import scipy.io as sio
 import pylab
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
+
+if 0:
+	cpsType = raw_input('Enter the type of cps (single_pip/dual_pip/multi_pip): ')
+	if cpsType == 'single_pip' or cpsType == 'dual_pip' or cpsType == 'multi_pip':
+		print '\nCps type is: ', cpsType ,'\n'
+		print 'Note: Pls make sure that pico data should be filtered with at least 10kHz. \n      and it is stored in the .mat file.\n'
+		# sys.exit(1)
+	else:
+		raise ValueError('Pls enter the valid input')
+		sys.exit(1)
 
 # Write simple module for level detection and thus calculate the rpm
 
 
-# data = sio.loadmat('E:\python_scripts\Veh_Mapping\\n21_data\\n21_data_1.mat')
+if 0:
+	try:
+		fileAddress = raw_input('Enter the address of the .mat file: ')
+		data = sio.loadmat(fileAddress)
+	except IOError:
+		print 'Wrong address.'
+		sys.exit(1)
 data = sio.loadmat('E:\python_scripts\Veh_Mapping\\n21_Timing_02.mat')
 
 if 0:	
-	print("type of data = " ,type(data))
-	print("size of A: ",len(data['A']))
-	print("size of B: ",len(data['B']))
-	print("\n\n\n")
-	print(data)
-	print("\n\n\n")
-	# print("Data in dict: ", data['B'])
+	print "type of data = " ,type(data)
+	print "size of A: ",len(data['A'])
+	print "size of B: ",len(data['B'])
+	print "\n\n\n"
+	print data
+	print "\n\n\n"
+	# print "Data in dict: ", data['B']
 
 minDatapoints = min(len(data['A']),len(data['B']))
 cpsRaw = data['A']
@@ -103,6 +125,9 @@ for i in range(len(cps)):
 			# print("timeMinZeroLevel = ",timeMinZeroLevel,"\n")
 			ignAngle[i] = 360*(timeMinZeroLevel - timeDwellEndDetected)/diffTimeZeroDetected
 			minZeroLevel = 0
+			if itSparked == False:
+				print 'ign miss at ',time[i]
+			itSparked = False
 		cpsZeroLevelDetected = False
 
 	#	rpm calculation: end
@@ -112,6 +137,7 @@ for i in range(len(cps)):
 	if 1:
 		if(ign[i] < dwellStartLevel):
 			dwellStartDetected = True
+			itSparked = True
 		else:
 			dwellStartDetected = False
 		if(ign[i] > dwellEndLevel):
@@ -141,7 +167,7 @@ if 1:
 	if 1:		# decide whether to show the plot or save the file. 
 		plt.show()
 	else:		
-		# pylab.savefig('n21_data_3.png')
+		pylab.savefig('n21_data_3.png')
 		pass
 
 
