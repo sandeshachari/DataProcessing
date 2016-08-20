@@ -17,6 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
+
 if 0:
 	cpsType = raw_input('Enter the type of cps (single_pip/dual_pip/multi_pip): ')
 	if cpsType == 'single_pip' or cpsType == 'dual_pip' or cpsType == 'multi_pip':
@@ -26,6 +27,8 @@ if 0:
 	else:
 		raise ValueError('Pls enter the valid input')
 		sys.exit(1)
+else:
+	cpsType = 'single_pip'		
 
 # Write simple module for level detection and thus calculate the rpm
 
@@ -37,7 +40,11 @@ if 0:
 	except IOError:
 		print 'Wrong address.'
 		sys.exit(1)
-data = sio.loadmat('E:\python_scripts\Veh_Mapping\\n21_Timing_02.mat')
+try:
+	data = sio.loadmat('E:\python_scripts\Veh_Mapping\single_pip\\n21_Timing_02.mat')
+except:
+	print 'No such file in directory.'
+	sys.exit(1)
 
 if 0:	
 	print "type of data = " ,type(data)
@@ -64,25 +71,30 @@ for i in range(minDatapoints):
 # print("size of time = ",len(time))
 
 
-
+# Configurable parameters: start
 cpsAdvLevel = 4
+cpsZeroLevel = -4
+
+dwellStartLevel = 4
+dwellEndLevel = 4
+
+# Configurable parameters: end
+
 cpsAdv=0
 timeAdvDetected = 0
 rpmFromAdv = np.zeros(len(cps))
 
-cpsZeroLevel = -4
 cpsZero=0
 timeZeroDetected = 0
 rpmFromZero = np.zeros(len(cps))
 
 ignAngle = np.zeros(len(cps))
+ignAngleList = []
 
 cpsZeroLevelDetected = False
 
 diffTimeZeroDetected = 100000
 
-dwellStartLevel = 4
-dwellEndLevel = 4
 timeDwellEndDetected = 0
 dwellStartDetected = False
 dwellEndDetected = False
@@ -100,10 +112,19 @@ for i in range(len(cps)):
 	if(cps[i] > cpsAdvLevel):
 		cpsAdv = cpsAdv + 1;
 		if((cpsAdvLevelDetected == False)):
-			if (cpsAdv > 1):
+			if cpsType == 'single_pip':
+				if (cpsAdv > 1):
+					diffTimeAdvDetected = time[i] - timeAdvDetected
+					rpmFromAdv[i] = 60/diffTimeAdvDetected
+				timeAdvDetected = time[i]
+			elif cpsType == 'dual_pip':
 				diffTimeAdvDetected = time[i] - timeAdvDetected
-				rpmFromAdv[i] = 60/diffTimeAdvDetected
-			timeAdvDetected = time[i]
+				if(cpsAdv > 2):
+					if int(diffTimeAdvDetected/diffTimeAdvDetectedOld) == 0:
+						# Small pip is ignored
+						rpmFromAdv[i] = 60/(diffTimeAdvDetected + diffTimeAdvDetectedOld)
+				timeAdvDetected = time[i]
+				diffTimeAdvDetectedOld = diffTimeAdvDetected
 		cpsAdvLevelDetected = True
 	else:
 		cpsAdvLevelDetected = False
@@ -112,18 +133,33 @@ for i in range(len(cps)):
 	if (cps[i] < cpsZeroLevel):
 		cpsZero = cpsZero + 1;
 		if((cpsZeroLevelDetected == False)):
-			if (cpsZero > 1):
+			if cpsType == 'single_pip':
+				if (cpsZero > 1):
+					diffTimeZeroDetected = time[i] - timeZeroDetected
+					rpmFromZero[i] = 60/diffTimeZeroDetected			
+				timeZeroDetected = time[i]		
+			else:
 				diffTimeZeroDetected = time[i] - timeZeroDetected
-				rpmFromZero[i] = 60/diffTimeZeroDetected
-			timeZeroDetected = time[i]		
-		if(minZeroLevel > cps[i]):
-			minZeroLevel = cps[i]
-			timeMinZeroLevel = time[i]			
+				if(cpsAdv > 2):
+					if int(diffTimeZeroDetected/diffTimeZeroDetectedOld) == 0:
+						# Small pip is ignored
+						rpmFromZero[i] = 60/(diffTimeZeroDetected + diffTimeZeroDetectedOld)
+						smallPip = False
+					else:
+						smallPip = True
+				timeZeroDetected = time[i]
+				diffTimeZeroDetectedOld = diffTimeZeroDetected
+
+		if cpsType == 'single_pip' or (cpsType == 'dual_pip' and cpsZero > 2 and smallPip == False):
+			if(minZeroLevel > cps[i]):
+				minZeroLevel = cps[i]
+				timeMinZeroLevel = time[i]			
 		cpsZeroLevelDetected = True
 	else:
 		if(cpsZeroLevelDetected == True):
 			# print("timeMinZeroLevel = ",timeMinZeroLevel,"\n")
 			ignAngle[i] = 360*(timeMinZeroLevel - timeDwellEndDetected)/diffTimeZeroDetected
+			ignAngleList.append(round(ignAngle[i],2))
 			minZeroLevel = 0
 			if itSparked == False:
 				print 'ign miss at ',time[i]
@@ -149,7 +185,7 @@ for i in range(len(cps)):
 	#	dwell detection: end
 
 
-if 1:
+if 0:
 	if 0:		# decide whether to plot only cps and ign or rpm also
 		plt.figure()
 		plt.plot(time, cps, time, ign,  time, ignAngle)
@@ -167,8 +203,12 @@ if 1:
 	if 1:		# decide whether to show the plot or save the file. 
 		plt.show()
 	else:		
-		pylab.savefig('n21_data_3.png')
+		pylab.savefig('\single_pip\\n21_data_3.png')
 		pass
+avgIgnAngle = round(np.array(ignAngleList[1:len(ignAngleList)-1]).mean(),2)
+print '\nSuccessfully completed mapping.'		
+print '\nIgn angles:\n',ignAngleList[1:len(ignAngleList)-1]
+print '\n','Average ign angle = ',avgIgnAngle
 
 
 
