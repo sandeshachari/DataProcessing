@@ -18,9 +18,9 @@ import matplotlib.pyplot as plt
 import sys
 
 
-if 0:
-	cpsType = raw_input('Enter the type of cps (single_pip/dual_pip/multi_pip): ')
-	if cpsType == 'single_pip' or cpsType == 'dual_pip' or cpsType == 'multi_pip':
+if 1:
+	cpsType = raw_input('Enter the type of cps (single_pip/dual_pip): ')
+	if cpsType == 'single_pip' or cpsType == 'dual_pip':	# or cpsType == 'multi_pip':
 		print '\nCps type is: ', cpsType ,'\n'
 		print 'Note: Pls make sure that pico data should be filtered with at least 10kHz. \n      and it is stored in the .mat file.\n'
 		# sys.exit(1)
@@ -33,7 +33,7 @@ else:
 # Write simple module for level detection and thus calculate the rpm
 
 
-if 0:
+if 1:
 	try:
 		fileAddress = raw_input('Enter the address of the .mat file: ')
 		data = sio.loadmat(fileAddress)
@@ -90,11 +90,13 @@ rpmFromZero = np.zeros(len(cps))
 
 ignAngle = np.zeros(len(cps))
 ignAngleList = []
+timeDwellOnList = []
 
 cpsZeroLevelDetected = False
 
 diffTimeZeroDetected = 100000
 
+timeDwellStartDetected = 0
 timeDwellEndDetected = 0
 dwellStartDetected = False
 dwellEndDetected = False
@@ -172,13 +174,16 @@ for i in range(len(cps)):
 	#	dwell detection: start
 	if 1:
 		if(ign[i] < dwellStartLevel):
-			dwellStartDetected = True
 			itSparked = True
+			if dwellStartDetected == False:
+				timeDwellStartDetected = time[i]
+			dwellStartDetected = True			
 		else:
 			dwellStartDetected = False
 		if(ign[i] > dwellEndLevel):
 			if(dwellEndDetected == False):
 				timeDwellEndDetected = time[i]
+				timeDwellOnList.append(round((timeDwellEndDetected - timeDwellStartDetected)*1000,2))
 			dwellEndDetected = True
 		else:
 			dwellEndDetected = False
@@ -205,10 +210,15 @@ if 0:
 	else:		
 		pylab.savefig('\single_pip\\n21_data_3.png')
 		pass
+
+
 avgIgnAngle = round(np.array(ignAngleList[1:len(ignAngleList)-1]).mean(),2)
+avgDwellOnTime = round(np.array(timeDwellOnList[1:len(timeDwellOnList)-1]).mean(),2)
 print '\nSuccessfully completed mapping.'		
-print '\nIgn angles:\n',ignAngleList[1:len(ignAngleList)-1]
-print '\n','Average ign angle = ',avgIgnAngle
+print '\nIgn angles in degree (before zero pulse):\n',ignAngleList[1:len(ignAngleList)-1]
+print '\nDwell on times (ms):\n',timeDwellOnList[1:len(timeDwellOnList)-1]
+print '\n\nAverage','Average ign angle = ',avgIgnAngle,'degrees'
+print '\nAverage dwell on time = ', avgDwellOnTime,'ms'
 
 
 
