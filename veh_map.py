@@ -17,14 +17,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 import math
+from colorama import Fore
 
 
 if 1:
 	cpsType = raw_input('\nEnter the type of cps and ign (single_pip_tci/dual_pip_tci/single_pip_cdi/dual_pip_cdi): ')
 	if cpsType == 'single_pip_tci' or cpsType == 'dual_pip_tci' or cpsType == 'single_pip_cdi' or cpsType == 'dual_pip_cdi':	# or cpsType == 'multi_pip':
 		print '\nCps type is: ', cpsType ,'\n'
-		print 'Note: Pls make sure that \n1. Pico data is filtered with at least 10kHz. \n2. It is stored in the .mat file.' \
-		'\n3. Ign/Inj angle is calculated from the minimum of zero pulse.\n'
+		print '{}Note: Pls make sure that \n{}1. Pico data is filtered with at least 10kHz. \n2. It is stored in the .mat file.' \
+		'\n3. Ign/Inj angle is calculated from the minimum of zero pulse.\n'.format(Fore.CYAN,Fore.WHITE)
 
 		# sys.exit(1)
 	else:
@@ -293,15 +294,21 @@ ignAngleStdDev = round(np.array(ignAngleList[3:len(ignAngleList)-1]).std(),2)
 # print '\nIgn angles in degree (before zero pulse min point):\n',ignAngleList[1:len(ignAngleList)-1]
 
 # 1 space 4 tabs, 1 space 8 tabs
-print '\n\nEntity 				Average 					Std dev'
-print '\nRpm 				', avgRpm,'						',rpmStdDev 
-print 'Ign Angle (degrees)		', avgIgnAngle,'						',ignAngleStdDev, 
+# print '\n\nEntity 				Average 					Std dev'
+# print '\nRpm 				', avgRpm,'						',rpmStdDev 
+# print 'Ign Angle (degrees)		', avgIgnAngle,'						',ignAngleStdDev, 
+
+print '\n {0}{1:15}\t\t\t{2:7}\t\t\t{3:7}'.format(Fore.CYAN,'Entity','Average','Std dev')
+print ' {0}{1:15}\t\t\t{2:.2f}\t\t\t{3:.2f}'.format(Fore.WHITE,'Rpm',avgRpm,rpmStdDev)
+print ' {0}{1:15}\t\t\t{2:.2f}\t\t\t{3:.2f}'.format(Fore.WHITE,'Ign Angle(degrees)',avgIgnAngle,ignAngleStdDev)
 
 if cpsType == 'single_pip_tci' or cpsType == 'dual_pip_tci':
 	avgDwellOnTime = round(np.array(timeDwellOnList[1:len(timeDwellOnList)-1]).mean(),2)	
 	dwellOnTimeStdDev = round(np.array(timeDwellOnList[1:len(timeDwellOnList)-1]).std(),2)
 	# print '\nAverage dwell on time = ', avgDwellOnTime,'ms', '		Std dev in dwell on time = ',dwellOnTimeStdDev,'ms'	
-	print '\nDwell on time (ms)		', avgDwellOnTime,'						',dwellOnTimeStdDev, 
+	# print '\nDwell on time (ms)		', avgDwellOnTime,'						',dwellOnTimeStdDev, 
+	print ' {0}{1:15}\t\t\t{2:.2f}\t\t\t{3:.2f}'.format(Fore.WHITE,'Dwell on time (ms)',avgDwellOnTime,dwellOnTimeStdDev)
+
 
 mappingFailed = False
 if rpmStdDev > 150 or math.isnan(rpmStdDev):
