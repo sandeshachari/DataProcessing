@@ -24,7 +24,6 @@ import os
 import subprocess
 import tempfile
 from parameters import *
-#import parameters
 import single_dual_pip,multi_pip
 
 
@@ -48,30 +47,29 @@ class VehMap(cmd.Cmd):
 		""" exit: Successfully terminates the custom shell"""		
 		return True
 
-
-	# @click.command()
-	# # @click.option('--cps_type',prompt= 'Enter the type of cps and ign: ',help = 'single_pip_tci/dual_pip_tci/single_pip_cdi/dual_pip_cdi')
-	# @click.option('--cps_type',prompt= 'Enter the type of cps and ign',type = click.Choice(['single_pip_tci','single_pip_cdi','dual_pip_tci','dual_pip_cdi']),help = 'single_pip_tci/dual_pip_tci/single_pip_cdi/dual_pip_cdi')	
-	# @click.option('--address',prompt = 'Enter the address of the .mat file: ', help = 'Address of .mat file generated from pico data.')
-	# cps_type = 'dual_pip_cdi'
-	# address = 'dual_pip/dual_pip_data.mat'
-
 	def do_set_config_params(self,line):	
-		# os.startfile('parameters.py')			
-		# parameters.init()
-		# print 'paramInjTech in veh_map.py =',parameters.paramInjTech
-		# p = subprocess.call(['subl','parameters.py'],shell=True)#,stdout=subprocess.PIPE)
-		# returncode = p.wait()
-		# print 'returncode =',returncode
-		# p.communicate
-		# returncode	= p.wait()
-		# subprocess.check_output(['subl','parameters.py'])
-		# os.system('parameters.py')
-		# while tempfile.NamedTemporaryFile(suffix='task') as temp:
-	    # subprocess.call(['subl', 'parameters.py'])
-		# access = os.access('veh_map.py',os.W_OK)
-		# print 'access =',access
-		subprocess.Popen(['subl','-w','parameters.py']).wait()
+		subprocess.Popen(['subl','-w','set_params.txt']).wait()
+		# subprocess.Popen(['notepad.exe','set_params.txt']).wait()		
+
+		numLines = sum(1 for line in open('set_params.txt'))
+
+		# print 'numLines = ',numLines
+
+		f = open(r'set_params.txt','r');
+		filedata = f.read()
+		f.seek(0)
+		
+		if not params:
+			for i in range(0,numLines):
+				params.append(str.split(f.readline())[0])
+		else:
+			for i in range(0,len(params)):
+				params[i] = str.split(f.readline())[0]
+
+		
+
+		# print 'params = ',params
+		# print 'total teeth = ', paramTotalTeeth	
 		pass
 
 
@@ -79,48 +77,78 @@ class VehMap(cmd.Cmd):
 
 
 	def do_reset_config_params(self,line):
-		# paramAutoLevelDetection = 'true'
-		# paramCpsAdvLevel = 2
-		# paramCpsZeroLevel = -2
-		# paramDwellStartLevel = 2
-		# paramDwellEndLevel = 2
-		# paramInjStartLevel = -3#-3    #5
-		# paramInjEndLevel = -3#-3   #5
-		# paramCdiIgnDetectionLevel = -6
-		# paramInjTech = 'carb'	# fi
-		# paramCpsType = 'single_pip_tci'
-		# paramTotalTeeth = 24
-		# paramTotalMissingTeeth = 1
-		# parameters.paramInjTech = 'carb'
-		# global paramInjTech
-		parameters.paramInjTech = 'carb'
+		autoLevelDetection = True
+		cpsAdvLevel = 4
+		cpsZeroLevel = -4
+		dwellStartLevel = 4
+		dwellEndLevel = 4
+		injStartLevel = 3
+		injEndLevel = 3
+		cdiIgnDetectionLevel = -3
+		injTech = 'carb'
+		cpsType = 'single_pip_tci'
+		nTeeth = 12
+		nMissingTeeth = 3
+		cpsChannel = 'A'
+		ignChannel = 'B'
+		injChannel = 'C'
+		fileName = 'single_pip/N21_Timing_02.mat'
+
 
 	def do_print_temp(self,line):
-		# global paramInjTech
-		print 'paramInjTech =',parameters.paramInjTech		
+		print 'total teeth = ', params[10]
 
 
 	def do_get_avg_outputs(self,line):		
 		global gTime,gCps,gIgn,gRpm
-		global cpsType
+		# global cpsType
+
+		# print 'params = ',params
+
+
+		autoLevelDetection = (bool)(params[0])
+		cpsAdvLevel = (int)(params[1])
+		cpsZeroLevel = (int)(params[2])
+		dwellStartLevel = (int)(params[3])
+		dwellEndLevel = (int)(params[4])
+		injStartLevel = (int)(params[5])
+		injEndLevel = (int)(params[6])
+		cdiIgnDetectionLevel = (int)(params[7])
+		injTech = (params[8])
+		cpsType = (params[9])
+		nTeeth = (int)(params[10])
+		nMissingTeeth = (int)(params[11])
+		cpsChannel = params[12]
+		ignChannel = params[13]
+		injChannel = params[14]
+		fileName = params[15]
+
+		# print 'cpsType in veh_map is = ',cpsType
+		# print 'cpsChannel = ',cpsChannel
+		
+
+		# nTeeth = paramTotalTeeth
+		# nMissingTeeth = paramTotalMissingTeeth
+
+		# Pico channels setting
+		# cpsChannel = paramCpsChannel
+		# ignChannel = paramIgnChannel
+		# injChannel = paramInjChannel
+
+
+
 			
 		if 0:
 			cpsType = raw_input('\nEnter the type of cps and ign (single_pip_tci/single_pip_cdi/dual_pip_tci/dual_pip_cdi/multi_pip_tci/multi_pip_cdi): ')
 			if cpsType == 'single_pip_tci' or cpsType == 'dual_pip_tci' or cpsType == 'single_pip_cdi' or cpsType == 'dual_pip_cdi' or cpsType == 'multi_pip_tci' or cpsType == 'multi_pip_cdi':
 				print '\nCps type is: ', cpsType ,'\n'
-				# print '{}Note: Pls make sure that \n{}1. Pico data is filtered with at least 10kHz. \n2. It is stored in the .mat file.' \
-				# '\n3. Ign/Inj angle is calculated from the minimum of zero pulse.\n'.format(Fore.CYAN,Fore.WHITE)
-
-				# sys.exit(1)
 			else:
 				raise ValueError('Pls enter the valid input')
 				sys.exit(1)
 		else:
-			cpsType = 'single_pip_tci'		
-			# cpsType = cps_type
-			print '\nCps type is: ', cpsType ,'\n'	
-			# print '{}Note: Pls make sure that \n{}1. Pico data is filtered with at least 10kHz. \n2. It is stored in the .mat file.' \
-			# '\n3. Ign/Inj angle is calculated from the minimum of zero pulse.\n'.format(Fore.CYAN,Fore.WHITE)
+			# cpsType = 'multi_pip_tci'		
+			# print '\nCps type is: ', cpsType ,'\n'	
+			pass
 		
 
 
@@ -143,55 +171,32 @@ class VehMap(cmd.Cmd):
 		return False
 
 	# if 0:
-	# @click.command()
+	
 	# @click.option('--entity','-m',click.Choice(['cps','ign','rpm']),multiple=True)
-	def do_plot_data(self,line):
-		if 0:		# decide whether to plot only cps and ign or rpm also
-			# rpm = rpmFromZero
-			# print 'gCps_2: \n',gCps
-			plt.figure()
-			plt.plot(gTime, gCps, gTime, gIgn,  gTime, gRpm)   	# ignAngle
-			plt.xlabel('time')
-			plt.ylabel('voltage')
-			plt.grid()	
-		else:
-			fig, ax1 = plt.subplots()
-			ax2 = ax1.twinx()
-			ax1.plot(gTime, gCps, gTime, gIgn)
-			# ax2.plot(time,rpmFromAdv, '-r', time,rpmFromZero,'-m')
-			# ax2.plot(time,ignAngle,'-r')
-			ax2.plot(gTime,gRpm,'-r',label='rpm')	
-			ax1.set_xlabel('time')
-			ax1.set_ylabel('voltage')	
-			ax2.set_ylabel('rpm')	
-			plt.grid()
-		if 1:		# decide whether to show the plot or save the file. 
-			plt.show()
-		else:		
-			pylab.savefig('\single_pip\\n21_data_3.png')
-			pass
-		print '\n'
-			# return False			
+	# @click.option('--entity','-m',click.Choice(['cps_voltage','ign_voltage','inj_voltage']),multiple=True)	
+	# @click.option('--entity','-m',multiple=True)	
+	@click.command()
+	@click.option('--count',default=1,help='number of greetings')
+	@click.pass_context
+	def do_plot_data(self,count):
+		
+		print 'Hello', count
+		# single_dual_pip.single_dual_pip_plot()
+		# multi_pip.multi_pip_plot(())
+		# print entity
+		pass
+
 
 	def help_get_avg_outputs(self):
 		print '\nMethod to extract the map from the given input data.\nIt has two arguments 1. cps_type  2. address'
 		print 'cps_type = single_pip_tci/dual_pip_tci/single_pip_cdi/dual_pip_cdi'
 		print 'address = Address of .mat file generated from pico data.\n'
 
-	# def do_plot_data(self,line):
-	# 	print 'Do nothing'
 
 	def postsmd(stop,line):
 		print 'Exiting...'
 		stop = False
 
-
-# @click.command()
-# # @click.option('--cps_type',prompt= 'Enter the type of cps and ign: ',help = 'single_pip_tci/dual_pip_tci/single_pip_cdi/dual_pip_cdi')
-# # @click.option('--cps_type',prompt= 'Enter the type of cps and ign',type = click.Choice(['single_pip_tci','single_pip_cdi','dual_pip_tci','dual_pip_cdi']),help = 'single_pip_tci/dual_pip_tci/single_pip_cdi/dual_pip_cdi')	
-# # @click.option('--address',prompt = 'Enter the address of the .mat file: ', help = 'Address of .mat file generated from pico data.')
-# @click.option('--cps_type',default = 'none',type = click.Choice(['single_pip_tci','single_pip_cdi','dual_pip_tci','dual_pip_cdi']),help = 'single_pip_tci/dual_pip_tci/single_pip_cdi/dual_pip_cdi')#,prompt= 'Enter the type of cps and ign',type = click.Choice(['single_pip_tci','single_pip_cdi','dual_pip_tci','dual_pip_cdi']),help = 'single_pip_tci/dual_pip_tci/single_pip_cdi/dual_pip_cdi')	
-# @click.option('--address',default = 'none', help = 'Address of .mat file generated from pico data.')#,prompt = 'Enter the address of the .mat file: ', help = 'Address of .mat file generated from pico data.')
 
 def cli():	
 	#""" Something """
@@ -205,4 +210,4 @@ def cli():
 if __name__ == '__main__':
     print ''
     # VehMap(cps_type,address).cmdloop()
-    cli()
+    cli(	)

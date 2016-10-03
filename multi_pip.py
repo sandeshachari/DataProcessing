@@ -13,11 +13,36 @@ import tempfile
 from parameters import *
 # import parameters
 
-
+gTime = []	
+gCps = []
+gIgn = []
+gRpm = []
 
 def multi_pip_processing():
 	global cpsType,cpsAdvLevel,cpsZeroLevel,dwellStartLevel,dwellEndLevel,injStartLevel,injEndLevel,cdiIgnDetectionLevel,nTeeth,nMissingTeeth
-	print 'cpsType is: ',cpsType
+	global autoLevelDetection,injTech
+	global cpsChannel,ignChannel,injChannel
+
+	# print 'params in multi_pip is = ',params 
+
+	autoLevelDetection = (bool)(params[0])
+	cpsAdvLevel = (int)(params[1])
+	cpsZeroLevel = (int)(params[2])
+	dwellStartLevel = (int)(params[3])
+	dwellEndLevel = (int)(params[4])
+	injStartLevel = (int)(params[5])
+	injEndLevel = (int)(params[6])
+	cdiIgnDetectionLevel = (int)(params[7])
+	injTech = (params[8])
+	cpsType = (params[9])
+	nTeeth = (int)(params[10])
+	nMissingTeeth = (int)(params[11])
+	cpsChannel = params[12]
+	ignChannel = params[13]
+	injChannel = params[14]
+	fileName = params[15]
+
+	# print 'cpsType in multipip is: ',cpsType
 
 	if 0:
 		try:
@@ -29,7 +54,8 @@ def multi_pip_processing():
 			return False
 	else:		
 		try:
-			data = sio.loadmat('E:\python_scripts\Veh_Mapping\multi_pip\\glamour_fi_data.mat')
+			# data = sio.loadmat('E:\python_scripts\Veh_Mapping\multi_pip\\glamour_fi_data_2.mat')
+			data = sio.loadmat(fileName)			
 			# data = sio.loadmat(address)				
 		except:
 			print 'No such file in directory.'
@@ -50,18 +76,20 @@ def multi_pip_processing():
 	# print 'nMissingTeeth = ',nMissingTeeth
 
 	minDatapoints = min(len(data['A']),len(data['B']),len(data['C']))
-	cpsRaw = data['A']
+	cpsRaw = data[cpsChannel]
 	# print 'length of cps = ', len(cps)
 	cps = cpsRaw[0:minDatapoints]
 	# print 'length of cps = ', len(cps)
 	gCps = cps
 	# print 'gCps_1:\n',gCps
-	ignRaw = data['B']
+	ignRaw = data[ignChannel]
 	ign = ignRaw[0:minDatapoints]
 	gIgn = ign
 
-	injRaw = data['C']
+	injRaw = data[injChannel]
 	inj = injRaw[0:minDatapoints]
+	gInj = inj
+
 	timeInterval = data['Tinterval']
 	timeStart = data['Tstart']
 
@@ -137,6 +165,9 @@ def multi_pip_processing():
 
 	for i in range(len(cps)):		#minDatapoints
 		time[i] = timeStart*0 + i*timeInterval
+
+	# plt.plot(time,cps)
+	# plt.show()
 
 	for i in range(len(cps)):
 		if i > 0:
@@ -284,22 +315,27 @@ def multi_pip_processing():
 	injOnTimeStdDev = round(np.array(timeInjOnList[3:len(timeInjOnList)-1]).std(),2)
 
 
-	# print '\nRpm:\n',rpmFromZeroList[1:len(rpmFromZeroList)-1]		
-	# print '\nIgn angles in degree (before zero pulse min point):\n',ignAngleList[1:len(ignAngleList)-1]
+	print '\n {0}{1:15}\t\t\t{2:7}\t\t\t{3:7}'.format(Fore.CYAN,'Entity','Average','Std dev')
+	print ' {0}{1:15}\t\t\t{2:.2f}\t\t\t{3:.2f}'.format(Fore.WHITE,'Rpm',avgRpm,rpmStdDev)
+	print ' {0}{1:15}\t\t\t{2:.2f}\t\t\t{3:.2f}'.format(Fore.WHITE,'Ign Angle(degrees)',avgIgnAngle,ignAngleStdDev)
 
-	# 1 space 4 tabs, 1 space 8 tabs
-	print '\n\nEntity 				Average 					Std dev'
-	print '\nRpm 				', avgRpm,'						',rpmStdDev 
-	print '\nIgn Angle (degrees)		', avgIgnAngle,'						',ignAngleStdDev, 
-	print '\nInj Angle (degrees)		', avgInjAngle,'						',injAngleStdDev, 
+	# # 1 space 4 tabs, 1 space 8 tabs
+	# print '\n\nEntity 				Average 					Std dev'
+	# print '\nRpm 				', avgRpm,'						',rpmStdDev 
+	# print '\nIgn Angle (degrees)		', avgIgnAngle,'						',ignAngleStdDev, 
+	# print '\nInj Angle (degrees)		', avgInjAngle,'						',injAngleStdDev, 
 
 	if cpsType == 'multi_pip_tci':
 		avgDwellOnTime = round(np.array(timeDwellOnList[3:len(timeDwellOnList)-1]).mean(),2)	
 		dwellOnTimeStdDev = round(np.array(timeDwellOnList[3:len(timeDwellOnList)-1]).std(),2)
 		# print '\nAverage dwell on time = ', avgDwellOnTime,'ms', '		Std dev in dwell on time = ',dwellOnTimeStdDev,'ms'	
-		print '\nDwell on time (ms)		', avgDwellOnTime,'						',dwellOnTimeStdDev, 
+		# print '\nDwell on time (ms)		', avgDwellOnTime,'						',dwellOnTimeStdDev, 
+		print ' {0}{1:15}\t\t\t{2:.2f}\t\t\t{3:.2f}'.format(Fore.WHITE,'Dwell on time (ms)',avgDwellOnTime,dwellOnTimeStdDev)
 
-	print '\nInj on time (ms)		', avgInjOnTime,'						',injOnTimeStdDev, 
+
+	# print '\nInj on time (ms)		', avgInjOnTime,'						',injOnTimeStdDev, 
+	print ' {0}{1:15}\t\t\t{2:.2f}\t\t\t{3:.2f}'.format(Fore.WHITE,'Inj on time (ms)',avgInjOnTime,injOnTimeStdDev)
+
 
 
 	mappingFailed = False
@@ -312,7 +348,7 @@ def multi_pip_processing():
 	if injAngleStdDev > 5 or math.isnan(injAngleStdDev):
 		print '\n\nSomething went wrong with the inj angle. Change the inj detection level if necessary.'
 		mappingFailed = True	
-	if dwellOnTimeStdDev > 5 or math.isnan(dwellOnTimeStdDev) and  cpsType == 'multi_pip_tci':
+	if dwellOnTimeStdDev > 5 or math.isnan(dwellOnTimeStdDev) and  cpsType == 	'multi_pip_tci':
 		print '\n\nSomething went wrong with the dwell on time. Change the dwell detection level if necessary.'
 		mappingFailed = True		
 	if injOnTimeStdDev > 5 or math.isnan(injOnTimeStdDev):
@@ -320,13 +356,39 @@ def multi_pip_processing():
 		mappingFailed = True	
 
 	if mappingFailed == False:
-		print '\n\nInput data looks good. Successfully completed mapping.'	
+		print '\n\nInput data looks good. Successfully completed mapping.\n\n'	
 
 
 	# print '\n\n\n entered = ', entered	
 
-	plt.plot(time,cps,time,ign,time,inj)
-	plt.grid()
+	# plt.plot(time,cps,time,ign,time,inj)
+	# plt.grid()
 	# plt.show()
 
+def multi_pip_plot(output_list):
+	global gTime,gCps,gIgn,gRpm
+	plot_list = output_list		
+	
+	if 0:
+		global gTime,gCps,gIgn,gRpm	
+		plt.plot(gTime,gRpm)
+		plt.grid()
+		plt.show()
+	else:
+		j=0
+		for i in range(0,len(output_list)):
+			if output_list[i] == 'cps_voltage':
+				plot_list[j] = gCps
+			elif output_list[i] == 'ign_voltage':
+				plot_list[j] = gIgn
+			elif output_list[i] == 'inj_voltage':
+				plot_list[j] = gInj
+			j = j + 1
+
+		for entity in plot_list:
+			plt.plot(gTime,entity,label=entity)
+
+		plt.legend()
+		plt.grid()
+		plt.show()
 

@@ -11,12 +11,41 @@ import os
 import subprocess
 import tempfile
 from parameters import *
-# import parameters
+
+
+gTime = []	
+gCps = []
+gIgn = []
+gRpm = []
 
 
 def single_dual_pip_processing():
-	global cpsType,cpsAdvLevel,cpsZeroLevel,dwellStartLevel,dwellEndLevel,cdiIgnDetectionLevel
-	print 'cpsType is: ',cpsType
+	global cpsType,cpsAdvLevel,cpsZeroLevel,dwellStartLevel,dwellEndLevel,cdiIgnDetectionLevel,autoLevelDetection,injTech
+	global cpsChannel,ignChannel,injChannel
+	global gTime,gCps,gIgn,gRpm
+
+	# print 'params in single_dual_pip is = ',params 
+
+	autoLevelDetection = (bool)(params[0])
+	cpsAdvLevel = (int)(params[1])
+	cpsZeroLevel = (int)(params[2])
+	dwellStartLevel = (int)(params[3])
+	dwellEndLevel = (int)(params[4])
+	injStartLevel = (int)(params[5])
+	injEndLevel = (int)(params[6])
+	cdiIgnDetectionLevel = (int)(params[7])
+	injTech = (params[8])
+	cpsType = (params[9])
+	nTeeth = (int)(params[10])
+	nMissingTeeth = (int)(params[11])
+	cpsChannel = params[12]
+	ignChannel = params[13]
+	injChannel = params[14]
+	fileName = params[15]
+
+	# print 'cpsType in single_dual_pip is: ',cpsType	
+
+	
 	if 0:
 		try:
 			fileAddress = raw_input('Enter the address of the .mat file: ')
@@ -27,7 +56,8 @@ def single_dual_pip_processing():
 			return False
 	else:		
 		try:
-			data = sio.loadmat('E:\python_scripts\Veh_Mapping\single_pip\\N21_Timing_02.mat')
+			# data = sio.loadmat('E:\python_scripts\Veh_Mapping\single_pip\\N21_Timing_02.mat')
+			data = sio.loadmat(fileName)			
 			# data = sio.loadmat(address)				
 		except:
 			print 'No such file in directory.'
@@ -44,13 +74,14 @@ def single_dual_pip_processing():
 		# print "Data in dict: ", data['B']
 
 	minDatapoints = min(len(data['A']),len(data['B']))
-	cpsRaw = data['A']
+	# print 'cpsChannel = ',cpsChannel
+	cpsRaw = data[cpsChannel]
 	# print 'length of cps = ', len(cps)
 	cps = cpsRaw[0:minDatapoints]
 	# print 'length of cps = ', len(cps)
 	gCps = cps
 	# print 'gCps_1:\n',gCps
-	ignRaw = data['B']
+	ignRaw = data[ignChannel]
 	ign = ignRaw[0:minDatapoints]
 	gIgn = ign
 	timeInterval = data['Tinterval']
@@ -103,6 +134,11 @@ def single_dual_pip_processing():
 	for i in range(len(cps)):		#minDatapoints
 		time[i] = timeStart*0 + i*timeInterval
 
+	# print 'cpsZeroLevel in single_dual_pip is = ',cpsZeroLevel
+	# print 'type of 	cpsZeroLevel in single_dual_pip is = ',type(cpsZeroLevel)
+
+	# plt.plot(time,cps,time,ign)
+	# plt.show()
 
 	for i in range(len(cps)):
 		#	rpm calculation: start
@@ -279,8 +315,21 @@ def single_dual_pip_processing():
 		print '\n\nInput data looks good. Successfully completed mapping.\n\n'
 
 	gRpm = rpmFromZero
-	# print 'shutters down.'
-	plt.plot(time,rpmFromZero)#,time,ign)
-	plt.grid()
-	# plt.show()
 
+'''
+def single_dual_pip_plot(output_list[]):
+	if 0:
+		global gTime,gCps,gIgn,gRpm	
+		plt.plot(gTime,gRpm)
+		plt.grid()
+		plt.show()
+	else:
+		for entity in output_list:
+			plt.plot(gTime,entity,label=entity)
+		plt.grid()
+		plt.show()
+
+# import collections
+
+# outputs = collections.namedtuple('outputs', 'cps_voltage ign_voltage inj_voltage rpm ign_angle inj_angle ign_on_time inj_on_time')
+'''
